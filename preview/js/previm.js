@@ -38,7 +38,7 @@
   }
 
   function replacePageBreakTag(content) {
-    return content.replace('\\', '<div style="page-break-before: always;"></div>');
+    return content.replace(/\\\\/g, '<div style="page-break-before: always;"></div>');
   }
 
   function hasTargetFileType(filetype, targetList) {

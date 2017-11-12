@@ -71,3 +71,16 @@ graph TD;
 </pre>
 
 ![previm](https://raw.github.com/wiki/kannokanno/previm/images/previm-example-mermaid.png)
+
+
+### MathJax
+
+![MathJax](https://www.mathjax.org/)でLaTeXと同じように数式が書けます
+
+```
+$ F = am = rw^2m = mr \times (2 \pi n )^2 = 4 \pi ^2 mrn^2 $
+```
+
+### Other futures
+
+`\\`で改ページを挟むことができます。
