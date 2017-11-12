@@ -20,6 +20,11 @@
     return original_fence(tokens, idx, options, env, slf);
   };
 
+  function generateHtml(filetype, content) {
+    var converted = transform(filetype, content);
+    return replacePageBreakTag(converted);
+  }
+
   function transform(filetype, content) {
     if(hasTargetFileType(filetype, ['markdown', 'mkd'])) {
       return md.render(content);
@@ -30,6 +35,10 @@
       return textile(content);
     }
     return 'Sorry. It is a filetype(' + filetype + ') that is not support<br /><br />' + content;
+  }
+
+  function replacePageBreakTag(content) {
+    return content.replace('\\', '<div style="page-break-before: always;"></div>');
   }
 
   function hasTargetFileType(filetype, targetList) {
@@ -85,7 +94,7 @@
     }
     if (needReload && (typeof getContent === 'function') && (typeof getFileType === 'function')) {
       var beforePageYOffset = _win.pageYOffset;
-      _doc.getElementById('preview').innerHTML = transform(getFileType(), getContent());
+      _doc.getElementById('preview').innerHTML = generateHtml(getFileType(), getContent());
 
       MathJax.Hub.Config({
         tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
