@@ -81,6 +81,6 @@ graph TD;
 $ F = am = rw^2m = mr \times (2 \pi n )^2 = 4 \pi ^2 mrn^2 $
 ```
 
-### Other futures
+### Other features
 
 `\\\\`で改ページを挟むことができます。
