@@ -149,6 +149,12 @@ function! s:t.get_path_from_html_img()
   call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
 endfunction
 
+function! s:t.get_path_from_html_img_with_attr()
+  let arg = '<img src="path/img.png" width="50%">'
+  let expected = {'alt': '', 'path': 'path/img.png', 'title': ''}
+  call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
+endfunction
+
 function! s:empty_img_elements()
   return {'alt': '', 'path': '', 'title': ''}
 endfunction

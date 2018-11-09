@@ -231,7 +231,7 @@ endfunction
 
 function! previm#fetch_html_imgpath_elements(text) abort
   let elem = {'alt': '', 'path': '', 'title': ''}
-  let matched = matchlist(a:text, "<img.*src\s*=\s*[\"|']\\(.\\+\\)[\"|'].*>")
+  let matched = matchlist(a:text, "<img.*src\s*=\s*[\"|']\\(.\\{-}\\)[\"|'].*>")
   if empty(matched)
     return elem
   endif
