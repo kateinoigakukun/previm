@@ -7,7 +7,8 @@
                    .use(_win.markdownitDeflist)
                    .use(_win.markdownitFootnote)
                    .use(_win.markdownitSub)
-                   .use(_win.markdownitSup);
+                   .use(_win.markdownitSup)
+                   .use(_win.markdownitCheckbox);
 
   // Override default 'fence' ruler for 'mermaid' support
   var original_fence = md.renderer.rules.fence;
@@ -33,6 +34,8 @@
       return content;
     } else if(hasTargetFileType(filetype, ['textile'])) {
       return textile(content);
+    } else if(hasTargetFileType(filetype, ['asciidoc'])) {
+      return new Asciidoctor().convert(content, { attributes: { showtitle: true } });
     }
     return 'Sorry. It is a filetype(' + filetype + ') that is not support<br /><br />' + content;
   }

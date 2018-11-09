@@ -1,5 +1,6 @@
 scriptencoding utf-8
 " AUTHOR: kanno <akapanna@gmail.com>
+" MAINTAINER: previm developers
 " License: This file is placed in the public domain.
 let s:save_cpo = &cpo
 set cpo&vim
@@ -11,17 +12,21 @@ let s:newline_character = "\n"
 function! previm#open(preview_html_file) abort
   call previm#refresh()
   if exists('g:previm_open_cmd') && !empty(g:previm_open_cmd)
-    if has('win32') || has('win64') && g:previm_open_cmd =~? 'firefox'
+    if has('win32') && g:previm_open_cmd =~? 'firefox'
       " windows+firefox環境
-      call s:system(g:previm_open_cmd . ' '''  . substitute(a:preview_html_file,'\/','\\','g') . '''')
+      call s:system(g:previm_open_cmd . ' "'  . substitute(a:preview_html_file,'\/','\\','g') . '"')
+    elseif has('win32unix')
+      call s:system(g:previm_open_cmd . ' '''  . system('cygpath -w ' . a:preview_html_file) . '''')
     else
       call s:system(g:previm_open_cmd . ' '''  . a:preview_html_file . '''')
     endif
   elseif s:exists_openbrowser()
     let path = a:preview_html_file
     " fix temporary(the cause unknown)
-    if has('win32') || has('win64')
+    if has('win32')
       let path = fnamemodify(path, ':p:gs?\\?/?g')
+    elseif has('win32unix')
+      let path = substitute(path,'\/','','')
     endif
     call s:apply_openbrowser('file:///' . path)
   else
@@ -53,10 +58,16 @@ function! previm#refresh() abort
   call previm#refresh_js()
 endfunction
 
+let s:default_origin_css_path = "@import url('../../_/css/origin.css');"
+let s:default_github_css_path = "@import url('../../_/css/lib/github.css');"
+
 function! previm#refresh_css() abort
   let css = []
   if get(g:, 'previm_disable_default_css', 0) !=# 1
-    call extend(css, ["@import url('origin.css');",  "@import url('lib/github.css');"])
+    call extend(css, [
+          \ s:default_origin_css_path,
+          \ s:default_github_css_path
+          \ ])
   endif
   if exists('g:previm_custom_css_path')
     let css_path = expand(g:previm_custom_css_path)
@@ -76,9 +87,33 @@ function! previm#refresh_js() abort
   call writefile(encoded_lines, previm#make_preview_file_path('js/previm-function.js'))
 endfunction
 
-let s:base_dir = expand('<sfile>:p:h')
+let s:base_dir = fnamemodify(expand('<sfile>:p:h') . '/../preview', ':p')
+
+function! s:preview_directory()
+  return s:base_dir . sha256(expand('%:p'))[:15] . '-' . getpid()
+endfunction
+
 function! previm#make_preview_file_path(path) abort
-  return s:base_dir . '/../preview/' . a:path
+  let src = s:base_dir . '/_/' . a:path
+  let dst = s:preview_directory() . '/' . a:path
+  if !filereadable(dst)
+    let dir = fnamemodify(dst, ':p:h')
+	if !isdirectory(dir)
+      call mkdir(dir, 'p')
+    endif
+
+    exe printf("au VimLeave * call previm#cleanup_preview('%s')", dir)
+    if filereadable(src)
+      call s:File.copy(src, dst)
+    endif
+  endif
+  return dst
+endfunction
+
+function! previm#cleanup_preview(dir)
+  if isdirectory(a:dir)
+    call s:File.rmdir(a:dir, 'r')
+  endif
 endfunction
 
 " NOTE: getFileType()の必要性について。
@@ -142,12 +177,17 @@ function! s:do_external_parse(lines) abort
   " NOTE: 本来は外部コマンドに頼りたくない
   "       いずれjsパーサーが出てきたときに移行するが、
   "       その時に混乱を招かないように設定でrst2htmlへのパスを持つことはしない
+  let candidates = ['rst2html.py', 'rst2html']
   let cmd = ''
-  if executable('rst2html.py') ==# 1
-    let cmd = 'rst2html.py'
-  elseif executable('rst2html') ==# 1
-    let cmd = 'rst2html'
+  if has('win32')
+    let candidates = reverse(candidates)
   endif
+  for candidate in candidates
+    if executable(candidate) ==# 1
+      let cmd = candidate
+      break
+    endif
+  endfor
 
   if empty(cmd)
     call s:echo_err('rst2html.py or rst2html has not been installed, you can not run')
@@ -162,7 +202,10 @@ function! previm#convert_to_content(lines) abort
   let mkd_dir = s:escape_backslash(expand('%:p:h'))
   if has('win32unix')
     " convert cygwin path to windows path
-    let mkd_dir = s:escape_backslash(substitute(system('cygpath -wa ' . mkd_dir), "\n$", '', ''))
+    let mkd_dir = substitute(system('cygpath -wa ' . mkd_dir), "\n$", '', '')
+    let mkd_dir = substitute(mkd_dir, '\', '/', 'g')
+  elseif has('win32')
+    let mkd_dir = substitute(mkd_dir, '\', '/', 'g')
   endif
   let converted_lines = []
   for line in s:do_external_parse(a:lines)
