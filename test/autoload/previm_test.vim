@@ -143,6 +143,12 @@ function! s:t.get_title_from_single_quote()
   call s:assert.equals(expected, previm#fetch_imgpath_elements(arg))
 endfunction
 
+function! s:t.get_path_from_html_img()
+  let arg = '<img src="path/img.png">'
+  let expected = {'alt': '', 'path': 'path/img.png', 'title': ''}
+  call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
+endfunction
+
 function! s:empty_img_elements()
   return {'alt': '', 'path': '', 'title': ''}
 endfunction

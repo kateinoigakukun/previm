@@ -183,6 +183,9 @@ endfunction
 function! previm#relative_to_absolute_imgpath(text, mkd_dir) abort
   let elem = previm#fetch_imgpath_elements(a:text)
   if empty(elem.path)
+    let elem = previm#fetch_html_imgpath_elements(a:text)
+  endif
+  if empty(elem.path)
     return a:text
   endif
   for protocol in ['//', 'http://', 'https://', 'file://']
@@ -224,6 +227,16 @@ function! previm#fetch_imgpath_elements(text) abort
   endif
   let elem.alt = matched[1]
   return extend(elem, s:fetch_path_and_title(matched[2]))
+endfunction
+
+function! previm#fetch_html_imgpath_elements(text) abort
+  let elem = {'alt': '', 'path': '', 'title': ''}
+  let matched = matchlist(a:text, "<img.*src\s*=\s*[\"|']\\(.\\+\\)[\"|'].*>")
+  if empty(matched)
+    return elem
+  endif
+  let elem.path = matched[1]
+  return elem
 endfunction
 
 function! s:fetch_path_and_title(path) abort
