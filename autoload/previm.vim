@@ -181,10 +181,10 @@ endfunction
 " if win:
 "   ![alt](file://localhost/C:\Documents%20and%20Settings\folder/pictures\img.png "title")
 function! previm#relative_to_absolute_imgpath(text, mkd_dir) abort
-  let elem = previm#fetch_imgpath_elements(a:text)
-  if empty(elem.path)
-    let elem = previm#fetch_html_imgpath_elements(a:text)
-  endif
+  let mkd_img_elem = previm#fetch_imgpath_elements(a:text)
+  let elem = empty(mkd_img_elem.path) ?
+    \ previm#fetch_html_imgpath_elements(a:text) :
+    \ mkd_img_elem
   if empty(elem.path)
     return a:text
   endif
@@ -206,7 +206,10 @@ function! previm#relative_to_absolute_imgpath(text, mkd_dir) abort
 
   let prev_imgpath = ''
   let new_imgpath = ''
-  if empty(elem.title)
+  if elem.html
+    let prev_imgpath = printf('<img src="%s">', elem.path)
+    let new_imgpath = printf('<img src="//localhost%s%s">', pre_slash, local_path)
+  elseif empty(elem.title)
     let prev_imgpath = printf('!\[%s\](%s)', elem.alt, elem.path)
     let new_imgpath = printf('![%s](//localhost%s%s)', elem.alt, pre_slash, local_path)
   else
@@ -220,7 +223,7 @@ function! previm#relative_to_absolute_imgpath(text, mkd_dir) abort
 endfunction
 
 function! previm#fetch_imgpath_elements(text) abort
-  let elem = {'alt': '', 'path': '', 'title': ''}
+  let elem = {'alt': '', 'path': '', 'title': '', 'html': 0}
   let matched = matchlist(a:text, '!\[\([^\]]*\)\](\([^)]*\))')
   if empty(matched)
     return elem
@@ -230,7 +233,7 @@ function! previm#fetch_imgpath_elements(text) abort
 endfunction
 
 function! previm#fetch_html_imgpath_elements(text) abort
-  let elem = {'alt': '', 'path': '', 'title': ''}
+  let elem = {'alt': '', 'path': '', 'title': '', 'html': 1}
   let matched = matchlist(a:text, "<img.*src\s*=\s*[\"|']\\(.\\{-}\\)[\"|'].*>")
   if empty(matched)
     return elem

@@ -97,6 +97,14 @@ function! s:t.with_title_from_single_quote()
   call s:assert.equals(previm#relative_to_absolute_imgpath(arg_line, arg_dir), expected)
 endfunction
 
+function! s:t.with_html_img()
+  let rel_path = 'previm/some/path/img.png'
+  let arg_line = printf(' <img src="%s"> ', rel_path)
+  let arg_dir  = '/Users/foo/tmp'
+  let expected = printf(' <img src="//localhost%s/%s"> ', arg_dir, rel_path)
+  call s:assert.equals(previm#relative_to_absolute_imgpath(arg_line, arg_dir), expected)
+endfunction
+
 function! s:t.not_only_img()
   let rel_path = 'previm/some/path/img.png'
   let arg_line = printf('| a | ![img](%s) |', rel_path)
@@ -121,30 +129,42 @@ endfunction
 
 function! s:t.get_alt_and_path()
   let arg = '![IMG](path/img.png)'
-  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': ''}
+  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': '', 'html': 0}
   call s:assert.equals(previm#fetch_imgpath_elements(arg), expected)
 endfunction
 
 function! s:t.get_alt_and_path_from_image_in_link()
   let arg = '[![IMG](path/img.png)](path/some/file)'
-  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': ''}
+  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': '', 'html': 0}
   call s:assert.equals(previm#fetch_imgpath_elements(arg), expected)
 endfunction
 
 function! s:t.get_title_from_double_quote()
   let arg = '![IMG](path/img.png  "image")'
-  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': 'image'}
+  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': 'image', 'html': 0}
   call s:assert.equals(expected, previm#fetch_imgpath_elements(arg))
 endfunction
 
 function! s:t.get_title_from_single_quote()
   let arg = "![IMG](path/img.png  'image')"
-  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': 'image'}
+  let expected = {'alt': 'IMG', 'path': 'path/img.png', 'title': 'image', 'html': 0}
   call s:assert.equals(expected, previm#fetch_imgpath_elements(arg))
 endfunction
 
 function! s:t.get_path_from_html_img()
   let arg = '<img src="path/img.png">'
+  let expected = {'alt': '', 'path': 'path/img.png', 'title': '', 'html': 1}
+  call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
+endfunction
+
+function! s:t.get_path_from_html_img_with_attr()
+  let arg = '<img src="path/img.png" width="50%">'
+  let expected = {'alt': '', 'path': 'path/img.png', 'title': '', 'html': 1}
+  call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
+endfunction
+
+function! s:t.get_path_from_html_img_with_attr()
+  let arg = '<img src="path/img.png" width="50%">'
   let expected = {'alt': '', 'path': 'path/img.png', 'title': ''}
   call s:assert.equals(expected, previm#fetch_html_imgpath_elements(arg))
 endfunction
@@ -156,7 +176,7 @@ function! s:t.get_path_from_html_img_with_attr()
 endfunction
 
 function! s:empty_img_elements()
-  return {'alt': '', 'path': '', 'title': ''}
+  return {'alt': '', 'path': '', 'title': '', 'html': 0}
 endfunction
 "}}}
 let s:t = themis#suite('refresh_css') "{{{
@@ -226,3 +246,7 @@ function! s:t.empty_if_not_exists_file()
   call s:assert.equals(actual, [])
 endfunction
 "}}}
+"
+function! s:start_with(haystock, needle) abort
+  return stridx(a:haystock, a:needle) ==# 0
+endfunction
