@@ -1,3 +1,3 @@
-[submodule "MathJax"]
-    path = preview/_/js/lib/MathJax
-    url = https://github.com/mathjax/MathJax.git
+[submodule "preview/_/js/lib/MathJax"]
+	path = preview/_/js/lib/MathJax
+	url = https://github.com/mathjax/MathJax.git
