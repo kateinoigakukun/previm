@@ -207,8 +207,10 @@ function! previm#relative_to_absolute_imgpath(text, mkd_dir) abort
   let prev_imgpath = ''
   let new_imgpath = ''
   if elem.html
-    let prev_imgpath = printf('<img src="%s">', elem.path)
-    let new_imgpath = printf('<img src="//localhost%s%s">', pre_slash, local_path)
+    let prev_imgpath = printf('<img src="%s"\(.*\)>', elem.path)
+    let text = substitute(a:text, "'", '"', 'g')
+    let matched = matchlist(text, prev_imgpath)
+    let new_imgpath = printf('<img src="//localhost%s%s"%s>', pre_slash, local_path, matched[1])
   elseif empty(elem.title)
     let prev_imgpath = printf('!\[%s\](%s)', elem.alt, elem.path)
     let new_imgpath = printf('![%s](//localhost%s%s)', elem.alt, pre_slash, local_path)
